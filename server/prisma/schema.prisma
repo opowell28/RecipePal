@@ -48,6 +48,19 @@ model Recipe {
   @@map("recipes")
 }
 
+model Ingredient {
+  id            String    @id @default(cuid())
+  name          String
+  amount        Float
+  unit          String
+  notes         String?
+
+  recipeId      String
+  recipe        Recipe    @relation(fields: [recipeId], references: [id], onDelete: Cascade)
+
+  @@map("ingredients")
+}
+
 model MealPlan {
   id            String    @id @default(cuid())
   date          DateTime
