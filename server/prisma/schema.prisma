@@ -5,11 +5,61 @@
 // Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
 
 generator client {
-  provider = "prisma-client"
-  output   = "../generated/prisma"
+  provider = "prisma-client-js"
 }
 
 datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String  @id @default(cuid())
+  email     String  @unique
+  password  String  //will hold hashed password
+  name      String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  recipes   Recipe[]
+  mealPlans MealPlan[]
+
+  @@map("users")
+}
+
+model Recipe {
+  id            String    @id @default(cuid())
+  title         String
+  description   String?
+  servings      Int       @default(4)
+  prepTime      Int?      //minutes
+  cookTime      Int?      //minutes
+  instructions  String    //JSON string or text
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  userID        String
+  user          User      @relation(fields: [userID], references: [id], onDelete: Cascade)
+
+  ingredients   Ingredient[]
+  mealPlans     MealPlan[]
+
+  @@map("recipes")
+}
+
+model MealPlan {
+  id            String    @id @default(cuid())
+  date          DateTime
+  mealType      String    // "breakfast", "lunch", "dinner", "snack"
+  servings      Int       @default(4)
+  createdAt     DateTime  @default(now())
+
+  userID        String
+  user          User      @relation(fields: [userID], references: [id], onDelete: Cascade)
+
+  recipeID      String
+  recipe        Recipe    @relation(fields: [recipeID], references: [id], onDelete: Cascade)
+
+  @@map("meal_plans")
 }
