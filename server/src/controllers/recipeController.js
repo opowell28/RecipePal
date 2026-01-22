@@ -30,7 +30,7 @@ const prisma = require('../lib/prisma');
 const createRecipe = async (req, res) => {
   try {
     const { title, description, servings, prepTime, cookTime, instructions, ingredients } = req.body;
-    const userId = req.userId; // From auth middleware
+    const userId = req.userId;
 
     const recipe = await prisma.recipe.create({
       data: {
@@ -40,9 +40,11 @@ const createRecipe = async (req, res) => {
         prepTime,
         cookTime,
         instructions,
-        userId,
+        user: {
+          connect: { id: userId }  // Changed from userId to user: { connect: ... }
+        },
         ingredients: {
-          create: ingredients, // Array of {name, amount, unit, notes}
+          create: ingredients,
         },
       },
       include: {
@@ -60,6 +62,8 @@ const createRecipe = async (req, res) => {
 const getRecipes = async (req, res) => {
   try {
     const userId = req.userId;
+    
+    console.log('Fetching recipes for userId:', userId); // Debug log
 
     const recipes = await prisma.recipe.findMany({
       where: { userId },
@@ -69,9 +73,11 @@ const getRecipes = async (req, res) => {
       orderBy: { createdAt: 'desc' },
     });
 
+    console.log('Found recipes:', recipes.length); // Debug log
     res.json(recipes);
   } catch (error) {
-    res.status(500).json({ error: 'Failed to fetch recipes' });
+    console.error('Error fetching recipes:', error); // Better error logging
+    res.status(500).json({ error: 'Failed to fetch recipes', details: error.message });
   }
 };
 
@@ -135,8 +141,17 @@ const deleteRecipe = async (req, res) => {
     const { id } = req.params;
     const userId = req.userId;
 
-    await prisma.recipe.delete({
+    // First verify the recipe belongs to the user
+    const recipe = await prisma.recipe.findFirst({
       where: { id, userId },
+    });
+
+    if (!recipe) {
+      return res.status(404).json({ error: 'Recipe not found' });
+    }
+
+    await prisma.recipe.delete({
+      where: { id },
     });
 
     res.json({ message: 'Recipe deleted successfully' });
