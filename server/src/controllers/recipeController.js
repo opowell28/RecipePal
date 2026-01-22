@@ -1,3 +1,30 @@
+/*
+ * Recipe Controller
+ * Handles CRUD operations for recipes and their ingredients
+ * 
+ * Example flow:
+ * 1. User creates a recipe with POST /recipes
+ *    - Auth middleware extracts userId from token
+ *    - createRecipe validates input and saves to database
+ *    - Returns created recipe with all ingredients
+ * 
+ * 2. User fetches all recipes with GET /recipes
+ *    - getRecipes queries all recipes for authenticated user
+ *    - Returns array sorted by newest first
+ * 
+ * 3. User views single recipe with GET /recipes/:id
+ *    - getRecipe verifies user owns the recipe
+ *    - Returns 404 if not found or unauthorized
+ * 
+ * 4. User updates recipe with PUT /recipes/:id
+ *    - Replaces all ingredients with new ones
+ *    - Returns updated recipe
+ * 
+ * 5. User deletes recipe with DELETE /recipes/:id
+ *    - Removes recipe and cascades ingredient deletion
+ *    - Returns success message
+ */
+
 const prisma = require('../lib/prisma');
 
 const createRecipe = async (req, res) => {
