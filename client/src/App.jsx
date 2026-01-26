@@ -3,6 +3,7 @@ import Login from './pages/Login';
 import Register from './pages/Register';
 import RecipeList from './pages/RecipeList';
 import RecipeForm from './pages/RecipeForm';
+import RecipeDetail from './pages/RecipeDetail';
 import ProtectedRoute from './components/ProtectedRoute';
 import { useAuthStore } from './store/authStore';
 
@@ -34,6 +35,15 @@ function App() {
           element={
             <ProtectedRoute>
               <RecipeForm />
+            </ProtectedRoute>
+          }
+        />
+        
+        <Route
+          path="/recipes/:id"
+          element={
+            <ProtectedRoute>
+              <RecipeDetail />
             </ProtectedRoute>
           }
         />
