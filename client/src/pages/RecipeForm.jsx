@@ -3,11 +3,10 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { recipeService } from '../services/recipeService';
 
 export default function RecipeForm() {
-  const { id } = useParams(); // Get recipe ID from URL (for editing)
+  const { id } = useParams();
   const navigate = useNavigate();
-  const isEditing = !!id; // True if editing, false if creating
+  const isEditing = !!id;
 
-  // Form state
   const [formData, setFormData] = useState({
     title: '',
     description: '',
@@ -17,15 +16,17 @@ export default function RecipeForm() {
     instructions: '',
   });
 
-  // Ingredients state - array of ingredient objects
   const [ingredients, setIngredients] = useState([
     { name: '', amount: '', unit: '' },
   ]);
 
+  // Tags state
+  const [tags, setTags] = useState([]);
+  const [tagInput, setTagInput] = useState('');
+
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
-  // If editing, fetch the recipe data
   useEffect(() => {
     if (isEditing) {
       fetchRecipe();
@@ -44,12 +45,13 @@ export default function RecipeForm() {
         instructions: recipe.instructions,
       });
       setIngredients(recipe.ingredients.length > 0 ? recipe.ingredients : [{ name: '', amount: '', unit: '' }]);
+      // Extract tag names from recipe
+      setTags(recipe.tags.map(rt => rt.tag.name));
     } catch (err) {
       setError('Failed to load recipe');
     }
   };
 
-  // Update form fields
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData({
@@ -60,32 +62,41 @@ export default function RecipeForm() {
     });
   };
 
-  // Update ingredient at specific index
   const handleIngredientChange = (index, field, value) => {
     const newIngredients = [...ingredients];
     newIngredients[index][field] = field === 'amount' ? parseFloat(value) || '' : value;
     setIngredients(newIngredients);
   };
 
-  // Add new ingredient row
   const addIngredient = () => {
     setIngredients([...ingredients, { name: '', amount: '', unit: '' }]);
   };
 
-  // Remove ingredient row
   const removeIngredient = (index) => {
     if (ingredients.length > 1) {
       setIngredients(ingredients.filter((_, i) => i !== index));
     }
   };
 
-  // Submit form
+  // Tag handlers
+  const addTag = (e) => {
+    e.preventDefault();
+    const trimmedTag = tagInput.trim().toLowerCase();
+    if (trimmedTag && !tags.includes(trimmedTag)) {
+      setTags([...tags, trimmedTag]);
+      setTagInput('');
+    }
+  };
+
+  const removeTag = (tagToRemove) => {
+    setTags(tags.filter(tag => tag !== tagToRemove));
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
     setLoading(true);
 
-    // Filter out empty ingredients
     const validIngredients = ingredients.filter(
       (ing) => ing.name && ing.amount && ing.unit
     );
@@ -101,6 +112,7 @@ export default function RecipeForm() {
       prepTime: formData.prepTime || null,
       cookTime: formData.cookTime || null,
       ingredients: validIngredients,
+      tags: tags, // Add tags to recipe data
     };
 
     try {
@@ -119,7 +131,6 @@ export default function RecipeForm() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Header */}
       <header className="bg-white shadow">
         <div className="max-w-4xl mx-auto px-4 py-4 sm:px-6 lg:px-8">
           <h1 className="text-2xl font-bold text-gray-900">
@@ -128,7 +139,6 @@ export default function RecipeForm() {
         </div>
       </header>
 
-      {/* Form */}
       <main className="max-w-4xl mx-auto px-4 py-8 sm:px-6 lg:px-8">
         <form onSubmit={handleSubmit} className="bg-white shadow rounded-lg p-6 space-y-6">
           {error && (
@@ -168,6 +178,49 @@ export default function RecipeForm() {
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
               placeholder="Brief description of your recipe"
             />
+          </div>
+
+          {/* Tags */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Tags
+            </label>
+            <div className="flex gap-2 mb-2">
+              <input
+                type="text"
+                value={tagInput}
+                onChange={(e) => setTagInput(e.target.value)}
+                onKeyPress={(e) => e.key === 'Enter' && addTag(e)}
+                className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                placeholder="Add a tag (e.g., dessert, quick, vegan)"
+              />
+              <button
+                type="button"
+                onClick={addTag}
+                className="px-4 py-2 bg-gray-200 text-gray-700 rounded hover:bg-gray-300"
+              >
+                Add Tag
+              </button>
+            </div>
+            {tags.length > 0 && (
+              <div className="flex flex-wrap gap-2">
+                {tags.map((tag) => (
+                  <span
+                    key={tag}
+                    className="inline-flex items-center gap-1 px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-sm"
+                  >
+                    {tag}
+                    <button
+                      type="button"
+                      onClick={() => removeTag(tag)}
+                      className="hover:text-blue-900"
+                    >
+                      ✕
+                    </button>
+                  </span>
+                ))}
+              </div>
+            )}
           </div>
 
           {/* Servings, Prep Time, Cook Time */}

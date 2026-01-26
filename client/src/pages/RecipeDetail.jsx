@@ -10,7 +10,6 @@ export default function RecipeDetail() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
-  // Fetch recipe on component mount
   useEffect(() => {
     fetchRecipe();
   }, [id]);
@@ -94,6 +93,20 @@ export default function RecipeDetail() {
                 </button>
               </div>
             </div>
+
+            {/* Tags */}
+            {recipe.tags.length > 0 && (
+              <div className="flex flex-wrap gap-2 mb-4">
+                {recipe.tags.map((rt) => (
+                  <span
+                    key={rt.id}
+                    className="inline-block px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-sm"
+                  >
+                    {rt.tag.name}
+                  </span>
+                ))}
+              </div>
+            )}
             
             {recipe.description && (
               <p className="text-gray-600 mb-4">{recipe.description}</p>

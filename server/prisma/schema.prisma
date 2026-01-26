@@ -14,14 +14,13 @@ datasource db {
 }
 
 model User {
-  id        String  @id @default(cuid())
-  email     String  @unique
-  password  String  //will hold hashed password
+  id        String   @id @default(cuid())
+  email     String   @unique
+  password  String
   name      String?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  // Relations
   recipes   Recipe[]
   mealPlans MealPlan[]
 
@@ -29,50 +28,73 @@ model User {
 }
 
 model Recipe {
-  id            String    @id @default(cuid())
-  title         String
-  description   String?
-  servings      Int       @default(4)
-  prepTime      Int?      //minutes
-  cookTime      Int?      //minutes
-  instructions  String    //JSON string or text
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
+  id           String   @id @default(cuid())
+  title        String
+  description  String?
+  servings     Int      @default(4)
+  prepTime     Int?
+  cookTime     Int?
+  instructions String
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
 
-  userId        String
-  user          User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId       String
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  ingredients   Ingredient[]
-  mealPlans     MealPlan[]
+  ingredients  Ingredient[]
+  mealPlans    MealPlan[]
+  tags         RecipeTag[]
 
   @@map("recipes")
 }
 
 model Ingredient {
-  id            String    @id @default(cuid())
-  name          String
-  amount        Float
-  unit          String
-  notes         String?
+  id       String  @id @default(cuid())
+  name     String
+  amount   Float
+  unit     String
+  notes    String?
 
-  recipeId      String
-  recipe        Recipe    @relation(fields: [recipeId], references: [id], onDelete: Cascade)
+  recipeId String
+  recipe   Recipe  @relation(fields: [recipeId], references: [id], onDelete: Cascade)
 
   @@map("ingredients")
 }
 
+model Tag {
+  id        String      @id @default(cuid())
+  name      String      @unique
+  createdAt DateTime    @default(now())
+  
+  recipes   RecipeTag[]
+
+  @@map("tags")
+}
+
+model RecipeTag {
+  id        String   @id @default(cuid())
+  recipeId  String
+  tagId     String
+  
+  recipe    Recipe   @relation(fields: [recipeId], references: [id], onDelete: Cascade)
+  tag       Tag      @relation(fields: [tagId], references: [id], onDelete: Cascade)
+  
+  @@unique([recipeId, tagId])
+  @@map("recipe_tags")
+}
+
 model MealPlan {
-  id            String    @id @default(cuid())
-  date          DateTime
-  mealType      String    // "breakfast", "lunch", "dinner", "snack"
-  servings      Int       @default(4)
-  createdAt     DateTime  @default(now())
+  id        String   @id @default(cuid())
+  date      DateTime
+  mealType  String
+  servings  Int      @default(4)
+  createdAt DateTime @default(now())
 
-  userID        String
-  user          User      @relation(fields: [userID], references: [id], onDelete: Cascade)
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  recipeID      String
-  recipe        Recipe    @relation(fields: [recipeID], references: [id], onDelete: Cascade)
+  recipeId  String
+  recipe    Recipe   @relation(fields: [recipeId], references: [id], onDelete: Cascade)
 
   @@map("meal_plans")
 }

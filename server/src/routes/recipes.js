@@ -8,12 +8,14 @@ const {
   getRecipe,
   updateRecipe,
   deleteRecipe,
+  getTags,
 } = require('../controllers/recipeController');
 
 const router = express.Router();
 
-router.use(authMiddleware); // All routes require auth
+router.use(authMiddleware);
 
+router.get('/tags', getTags);
 router.post('/', createRecipe);
 router.get('/', getRecipes);
 router.get('/:id', getRecipe);

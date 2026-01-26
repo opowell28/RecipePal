@@ -5,6 +5,8 @@ import { useAuthStore } from '../store/authStore';
 
 export default function RecipeList() {
   const [recipes, setRecipes] = useState([]);
+  const [allTags, setAllTags] = useState([]);
+  const [selectedTag, setSelectedTag] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   
@@ -12,20 +14,30 @@ export default function RecipeList() {
   const user = useAuthStore((state) => state.user);
   const navigate = useNavigate();
 
-  // Fetch recipes when component mounts
+  // Fetch recipes and tags when component mounts or when filter changes
   useEffect(() => {
     fetchRecipes();
-  }, []);
+    fetchTags();
+  }, [selectedTag]);
 
   const fetchRecipes = async () => {
     try {
       setLoading(true);
-      const data = await recipeService.getRecipes();
+      const data = await recipeService.getRecipes(selectedTag);
       setRecipes(data);
     } catch (err) {
       setError('Failed to load recipes');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchTags = async () => {
+    try {
+      const tags = await recipeService.getTags();
+      setAllTags(tags);
+    } catch (err) {
+      console.error('Failed to load tags');
     }
   };
 
@@ -45,6 +57,10 @@ export default function RecipeList() {
     } catch (err) {
       alert('Failed to delete recipe');
     }
+  };
+
+  const handleTagFilter = (tagName) => {
+    setSelectedTag(selectedTag === tagName ? null : tagName);
   };
 
   if (loading) {
@@ -91,10 +107,61 @@ export default function RecipeList() {
           </Link>
         </div>
 
+        {/* Tag filters */}
+        {allTags.length > 0 && (
+          <div className="mb-6">
+            <h3 className="text-sm font-medium text-gray-700 mb-2">Filter by tag:</h3>
+            <div className="flex flex-wrap gap-2">
+              <button
+                onClick={() => setSelectedTag(null)}
+                className={`px-4 py-2 rounded-full text-sm font-medium transition-colors ${
+                  selectedTag === null
+                    ? 'bg-blue-600 text-white'
+                    : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                }`}
+              >
+                All Recipes
+              </button>
+              {allTags.map((tag) => (
+                <button
+                  key={tag.id}
+                  onClick={() => handleTagFilter(tag.name)}
+                  className={`px-4 py-2 rounded-full text-sm font-medium transition-colors ${
+                    selectedTag === tag.name
+                      ? 'bg-blue-600 text-white'
+                      : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                  }`}
+                >
+                  {tag.name}
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Active filter indicator */}
+        {selectedTag && (
+          <div className="mb-4 flex items-center gap-2">
+            <span className="text-sm text-gray-600">
+              Showing recipes tagged with "{selectedTag}"
+            </span>
+            <button
+              onClick={() => setSelectedTag(null)}
+              className="text-sm text-blue-600 hover:text-blue-700"
+            >
+              Clear filter
+            </button>
+          </div>
+        )}
+
         {/* Recipes grid */}
         {recipes.length === 0 ? (
           <div className="text-center py-12">
-            <p className="text-gray-500 text-lg">No recipes yet. Create your first one!</p>
+            <p className="text-gray-500 text-lg">
+              {selectedTag 
+                ? `No recipes found with tag "${selectedTag}"`
+                : 'No recipes yet. Create your first one!'}
+            </p>
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -107,6 +174,21 @@ export default function RecipeList() {
                   <h3 className="text-xl font-semibold text-gray-900 mb-2">
                     {recipe.title}
                   </h3>
+                  
+                  {/* Tags */}
+                  {recipe.tags.length > 0 && (
+                    <div className="flex flex-wrap gap-1 mb-3">
+                      {recipe.tags.map((rt) => (
+                        <span
+                          key={rt.id}
+                          className="inline-block px-2 py-1 bg-blue-100 text-blue-700 rounded text-xs"
+                        >
+                          {rt.tag.name}
+                        </span>
+                      ))}
+                    </div>
+                  )}
+                  
                   <p className="text-gray-600 mb-4 line-clamp-2">
                     {recipe.description || 'No description'}
                   </p>
