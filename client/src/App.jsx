@@ -2,6 +2,7 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import Login from './pages/Login';
 import Register from './pages/Register';
 import RecipeList from './pages/RecipeList';
+import RecipeForm from './pages/RecipeForm';
 import ProtectedRoute from './components/ProtectedRoute';
 import { useAuthStore } from './store/authStore';
 
@@ -24,6 +25,24 @@ function App() {
           element={
             <ProtectedRoute>
               <RecipeList />
+            </ProtectedRoute>
+          }
+        />
+        
+        <Route
+          path="/recipes/new"
+          element={
+            <ProtectedRoute>
+              <RecipeForm />
+            </ProtectedRoute>
+          }
+        />
+        
+        <Route
+          path="/recipes/:id/edit"
+          element={
+            <ProtectedRoute>
+              <RecipeForm />
             </ProtectedRoute>
           }
         />
