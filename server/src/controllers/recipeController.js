@@ -168,6 +168,14 @@ const updateRecipe = async (req, res) => {
       }
     }
 
+    // Clean ingredients - remove id and recipeId fields
+    const cleanIngredients = ingredients.map(({ name, amount, unit, notes }) => ({
+      name,
+      amount,
+      unit,
+      notes: notes || null,
+    }));
+
     const recipe = await prisma.recipe.update({
       where: { id },
       data: {
@@ -178,7 +186,7 @@ const updateRecipe = async (req, res) => {
         cookTime,
         instructions,
         ingredients: {
-          create: ingredients,
+          create: cleanIngredients,
         },
         tags: {
           create: tagIds.map(tagId => ({ tagId })),
