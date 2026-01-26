@@ -29,8 +29,21 @@ const prisma = require('../lib/prisma');
 
 const createRecipe = async (req, res) => {
   try {
-    const { title, description, servings, prepTime, cookTime, instructions, ingredients } = req.body;
+    const { title, description, servings, prepTime, cookTime, instructions, ingredients, tags } = req.body;
     const userId = req.userId;
+
+    // Get or create tags
+    const tagIds = [];
+    if (tags && tags.length > 0) {
+      for (const tagName of tags) {
+        const tag = await prisma.tag.upsert({
+          where: { name: tagName.toLowerCase() },
+          update: {},
+          create: { name: tagName.toLowerCase() },
+        });
+        tagIds.push(tag.id);
+      }
+    }
 
     const recipe = await prisma.recipe.create({
       data: {
@@ -41,14 +54,22 @@ const createRecipe = async (req, res) => {
         cookTime,
         instructions,
         user: {
-          connect: { id: userId }  // Changed from userId to user: { connect: ... }
+          connect: { id: userId }
         },
         ingredients: {
           create: ingredients,
         },
+        tags: {
+          create: tagIds.map(tagId => ({ tagId })),
+        },
       },
       include: {
         ingredients: true,
+        tags: {
+          include: {
+            tag: true,
+          },
+        },
       },
     });
 
@@ -62,22 +83,38 @@ const createRecipe = async (req, res) => {
 const getRecipes = async (req, res) => {
   try {
     const userId = req.userId;
+    const { tag } = req.query; // Get tag filter from query params
+
+    const whereClause = { userId };
     
-    console.log('Fetching recipes for userId:', userId); // Debug log
+    // Add tag filter if provided
+    if (tag) {
+      whereClause.tags = {
+        some: {
+          tag: {
+            name: tag.toLowerCase(),
+          },
+        },
+      };
+    }
 
     const recipes = await prisma.recipe.findMany({
-      where: { userId },
+      where: whereClause,
       include: {
         ingredients: true,
+        tags: {
+          include: {
+            tag: true,
+          },
+        },
       },
       orderBy: { createdAt: 'desc' },
     });
 
-    console.log('Found recipes:', recipes.length); // Debug log
     res.json(recipes);
   } catch (error) {
-    console.error('Error fetching recipes:', error); // Better error logging
-    res.status(500).json({ error: 'Failed to fetch recipes', details: error.message });
+    console.error('Error fetching recipes:', error);
+    res.status(500).json({ error: 'Failed to fetch recipes' });
   }
 };
 
@@ -90,6 +127,11 @@ const getRecipe = async (req, res) => {
       where: { id, userId },
       include: {
         ingredients: true,
+        tags: {
+          include: {
+            tag: true,
+          },
+        },
       },
     });
 
@@ -106,11 +148,25 @@ const getRecipe = async (req, res) => {
 const updateRecipe = async (req, res) => {
   try {
     const { id } = req.params;
-    const { title, description, servings, prepTime, cookTime, instructions, ingredients } = req.body;
+    const { title, description, servings, prepTime, cookTime, instructions, ingredients, tags } = req.body;
     const userId = req.userId;
 
-    // Delete old ingredients and create new ones
+    // Delete old ingredients and tags
     await prisma.ingredient.deleteMany({ where: { recipeId: id } });
+    await prisma.recipeTag.deleteMany({ where: { recipeId: id } });
+
+    // Get or create tags
+    const tagIds = [];
+    if (tags && tags.length > 0) {
+      for (const tagName of tags) {
+        const tag = await prisma.tag.upsert({
+          where: { name: tagName.toLowerCase() },
+          update: {},
+          create: { name: tagName.toLowerCase() },
+        });
+        tagIds.push(tag.id);
+      }
+    }
 
     const recipe = await prisma.recipe.update({
       where: { id },
@@ -124,14 +180,23 @@ const updateRecipe = async (req, res) => {
         ingredients: {
           create: ingredients,
         },
+        tags: {
+          create: tagIds.map(tagId => ({ tagId })),
+        },
       },
       include: {
         ingredients: true,
+        tags: {
+          include: {
+            tag: true,
+          },
+        },
       },
     });
 
     res.json(recipe);
   } catch (error) {
+    console.error(error);
     res.status(500).json({ error: 'Failed to update recipe' });
   }
 };
@@ -141,7 +206,6 @@ const deleteRecipe = async (req, res) => {
     const { id } = req.params;
     const userId = req.userId;
 
-    // First verify the recipe belongs to the user
     const recipe = await prisma.recipe.findFirst({
       where: { id, userId },
     });
@@ -160,4 +224,16 @@ const deleteRecipe = async (req, res) => {
   }
 };
 
-module.exports = { createRecipe, getRecipes, getRecipe, updateRecipe, deleteRecipe };
+// New endpoint to get all tags
+const getTags = async (req, res) => {
+  try {
+    const tags = await prisma.tag.findMany({
+      orderBy: { name: 'asc' },
+    });
+    res.json(tags);
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to fetch tags' });
+  }
+};
+
+module.exports = { createRecipe, getRecipes, getRecipe, updateRecipe, deleteRecipe, getTags };
