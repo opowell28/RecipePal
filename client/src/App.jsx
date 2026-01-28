@@ -4,7 +4,7 @@ import Register from './pages/Register';
 import RecipeList from './pages/RecipeList';
 import RecipeForm from './pages/RecipeForm';
 import RecipeDetail from './pages/RecipeDetail';
-import ProtectedRoute from './components/ProtectedRoute';
+import ProtectedRoute from './components/protectedRoute';
 import { useAuthStore } from './store/authStore';
 
 function App() {
