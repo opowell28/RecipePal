@@ -14,7 +14,12 @@ const recipeRoutes = require('./routes/recipes');
 const app = express();
 const PORT = process.env.PORT || 3001;
 
-app.use(cors());
+// Update CORS to allow your Vercel domain
+app.use(cors({
+  origin: process.env.FRONTEND_URL || '*',
+  credentials: true,
+}));
+
 app.use(express.json());
 
 app.get('/test', (req, res) => {
