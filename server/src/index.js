@@ -14,9 +14,25 @@ const recipeRoutes = require('./routes/recipes');
 const app = express();
 const PORT = process.env.PORT || 3001;
 
-// Update CORS to allow your Vercel domain
+// CORS configuration - allow multiple origins
+const allowedOrigins = [
+  'https://recipe-pal-mu.vercel.app',
+  'http://localhost:5173',
+  process.env.FRONTEND_URL
+].filter(Boolean);
+
+// Update CORS to allow Vercel domain
 app.use(cors({
-  origin: process.env.FRONTEND_URL || '*',
+  origin: function (origin, callback) {
+    // Allow requests with no origin (like mobile apps or curl)
+    if (!origin) return callback(null, true);
+    
+    if (allowedOrigins.some(allowed => origin.includes(allowed.replace('https://', '').replace('http://', '')))) {
+      callback(null, true);
+    } else {
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
   credentials: true,
 }));
 
