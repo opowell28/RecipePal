@@ -18,6 +18,7 @@ const PORT = process.env.PORT || 3001;
 const allowedOrigins = [
   'https://recipe-pal-mu.vercel.app',
   'http://localhost:5173',
+  'https://recipe-api-6ed6.onrender.com',
   process.env.FRONTEND_URL
 ].filter(Boolean);
 
