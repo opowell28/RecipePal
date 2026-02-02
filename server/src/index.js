@@ -21,24 +21,11 @@ const allowedOrigins = [
   process.env.FRONTEND_URL
 ].filter(Boolean);
 
-const path = require('path');
-
 // log incoming requests (helps debug 404s)
 app.use((req, res, next) => {
   console.log(new Date().toISOString(), req.method, req.originalUrl);
   next();
 });
-
-if (process.env.NODE_ENV === 'production') {
-  const clientBuildPath = path.join(__dirname, '..', 'client', 'src');
-  app.use(express.static(clientBuildPath));
-
-  // SPA fallback: let client-side routes resolve to index.html
-  app.get('*', (req, res) => {
-    if (req.path.startsWith('/api')) return res.status(404).json({ error: 'Not found' });
-    res.sendFile(path.join(clientBuildPath, 'index.html'));
-  });
-}
 
 // Update CORS to allow Vercel domain
 app.use(cors({
