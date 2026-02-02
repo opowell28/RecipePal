@@ -16,7 +16,7 @@ const PORT = process.env.PORT || 3001;
 
 // CORS configuration - allow multiple origins
 const allowedOrigins = [
-  // 'https://recipe-pal-mu.vercel.app',
+  'https://recipe-pal-mu.vercel.app',
   'http://localhost:5173',
   process.env.FRONTEND_URL
 ].filter(Boolean);
@@ -30,14 +30,13 @@ app.use((req, res, next) => {
 // Update CORS to allow Vercel domain
 app.use(cors({
   origin: function (origin, callback) {
-    // Allow requests with no origin (like mobile apps or curl)
+    // Allow non-browser requests
     if (!origin) return callback(null, true);
     
-    if (allowedOrigins.some(allowed => origin.includes(allowed.replace('https://', '').replace('http://', '')))) {
-      callback(null, true);
-    } else {
-      callback(new Error('Not allowed by CORS'));
-    }
+    // Allow origins from list of allowed origins defined above 
+    if (allowedOrigins.includes(origin)) return callback(null, true);
+    console.log('Blocked CORS origin: ', origin);
+    callback(new Error('Not allowed by CORS'));
   },
   credentials: true,
 }));
